@@ -1,0 +1,10 @@
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: petstoregitrepo
+  namespace: sandbox-97-2
+spec:
+  params:
+  - name: url
+    value: https://github.com/agoncal/agoncal-application-petstore-ee7.git
+  type: git

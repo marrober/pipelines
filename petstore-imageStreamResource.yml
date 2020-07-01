@@ -1,0 +1,10 @@
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: petstoreimagestreamresource
+  namespace: sandbox-97-2
+spec:
+  params:
+  - name: url
+    value: image-registry.openshift-image-registry.svc:5000/sandbox-97-2/petstore-artefact-image
+  type: image

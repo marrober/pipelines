@@ -1,0 +1,16 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: view-image
+spec:
+  resources:
+    inputs:
+      - name: image
+        type: image
+  steps:
+    - name: what-directory
+      image: $(resources.inputs.image.url)
+      command:
+        - ls
+        - -al
+        - /tmp/src/target

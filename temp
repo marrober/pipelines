@@ -1,0 +1,25 @@
+  - name: view-image
+    resources:
+      inputs:
+      - name: image
+        resource: app-image
+    taskRef: 
+      kind: Task
+      name: view-image
+    runAfter: 
+    - build
+
+
+
+
+
+
+
+
+
+
+
+
+petstore-buildTask.yaml
+
+

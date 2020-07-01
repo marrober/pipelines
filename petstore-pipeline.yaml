@@ -1,0 +1,32 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  creationTimestamp: "2020-06-26T14:11:45Z"
+  generation: 1
+  labels:
+    app.kubernetes.io/instance: petstore-from-git
+    pipeline.openshift.io/type: kubernetes
+  name: petstorepipeline
+  namespace: sandbox-97-2
+spec:
+  params:
+  - default: petstore-from-git
+    name: APP_NAME
+    type: string
+  resources:
+  - name: app-source
+    type: git
+  - name: app-image
+    type: image
+  tasks:
+  - name: build
+    resources:
+      inputs:
+      - name: source
+        resource: app-source
+      outputs:
+      - name: image
+        resource: app-image
+    taskRef:
+      kind: Task
+      name: build

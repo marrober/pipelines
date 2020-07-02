@@ -74,7 +74,7 @@ spec:
         - name: envparams
           mountPath: /env-params
       workingDir: /workspace/source
-    - name: view-dockerfile-location
+    - name: view-workspace
       command:
         - ls
         - -al
@@ -104,6 +104,49 @@ spec:
         - name: gen-source
           mountPath: /gen-source
       workingDir: /gen-source
+    - name: gen-binary-extraction-dockerfile
+      command:
+        - /bin/sh
+        - '-c'
+      args:
+        - |-
+          echo "FROM $(resources.outputs.image.url)" > ext-dockerfile.gen
+          echo "RUN cp /tmp/src/target/applicationPetstore.war /envparams/Petstore.war" >> ext-dockerfile.gen
+          echo "------------------------------"
+          cat ext-dockerfile.gen
+          echo "------------------------------"
+      image: registry.redhat.io/ocp-tools-43-tech-preview/source-to-image-rhel8
+      volumeMounts:
+        - name: envparams
+          mountPath: /env-params
+      workingDir: /env-params
+    - name: extract-built-object
+      command:
+        - buildah
+        - bud
+        - '--tls-verify=$(params.TLSVERIFY)'
+        - '--layers'
+        - '-f'
+        - ext-dockerfile.gen
+        - .
+      image: registry.redhat.io/rhel8/buildah
+      resources: {}
+      securityContext:
+        privileged: true
+      volumeMounts:
+        - name: varlibcontainers
+          mountPath: /var/lib/containers
+        - name: envparams
+          mountPath: /env-params
+      workingDir: /env-params
+    - name: view-workspace-after-copy
+      command:
+        - ls
+        - -al
+      image: registry.redhat.io/ocp-tools-43-tech-preview/source-to-image-rhel8
+        - name: envparams
+          mountPath: /env-params
+      workingDir: /env-params
   volumes:
     - emptyDir: {}
       name: envparams
@@ -111,5 +154,3 @@ spec:
       name: gen-source
     - emptyDir: {}
       name: varlibcontainers
-    - emptyDir: {}
-      name: warfilelocation

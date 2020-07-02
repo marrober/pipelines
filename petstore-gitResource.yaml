@@ -6,5 +6,5 @@ metadata:
 spec:
   params:
   - name: url
-    value: https://github.com/agoncal/agoncal-application-petstore-ee7.git
+    value: https://github.com/marrober/petstore-jee7.git
   type: git

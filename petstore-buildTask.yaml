@@ -78,7 +78,7 @@ spec:
       command:
         - ls
         - -al
-        - /gen-source
+        - /workspace
       image: registry.redhat.io/ocp-tools-43-tech-preview/source-to-image-rhel8
       volumeMounts:
         - name: gen-source
@@ -103,6 +103,7 @@ spec:
           mountPath: /var/lib/containers
         - name: gen-source
           mountPath: /gen-source
+      workingDir: /gen-source
   volumes:
     - emptyDir: {}
       name: envparams

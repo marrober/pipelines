@@ -29,7 +29,9 @@ spec:
       - name: source
         type: git
     outputs:
-      - name: image
+      - name: output-image
+        type: image
+      - name: builder-image
         type: image
   steps :
     - name: gen-env-file
@@ -92,7 +94,7 @@ spec:
         - '-f'
         - /gen-source/Dockerfile.gen
         - '-t'
-        - $(resources.outputs.image.url)
+        - $(resources.outputs.builder-image.url)
         - .
       image: registry.redhat.io/rhel8/buildah
       resources: {}
@@ -110,8 +112,9 @@ spec:
         - '-c'
       args:
         - |-
-          echo "FROM $(resources.outputs.image.url)" > ext-dockerfile.gen
-          echo "RUN cp /tmp/src/target/applicationPetstore.war /envparams/Petstore.war" >> ext-dockerfile.gen
+          echo "FROM $(resources.outputs.builder-image.url) as builder-image" > ext-dockerfile.gen
+          echo "FROM openliberty/open-liberty as runtime-image" >> ext-dockerfile.gen
+          "COPY --from=builder-image /tmp/src/target/applicationPetstore.war /opt/petstore.war" >> ext-dockerfile.gen 
           echo "------------------------------"
           cat ext-dockerfile.gen
           echo "------------------------------"
@@ -128,6 +131,8 @@ spec:
         - '--layers'
         - '-f'
         - ext-dockerfile.gen
+        - '-t'
+        - $(resources.outputs.output-image.url)
         - .
       image: registry.redhat.io/rhel8/buildah
       resources: {}
@@ -139,14 +144,17 @@ spec:
         - name: envparams
           mountPath: /env-params
       workingDir: /env-params
-    - name: view-workspace-after-copy
+    - name: view-mages
       command:
-        - ls
-        - -al
-      image: registry.redhat.io/ocp-tools-43-tech-preview/source-to-image-rhel8
-        - name: envparams
-          mountPath: /env-params
-      workingDir: /env-params
+        - buildah
+        - images
+      image: registry.redhat.io/rhel8/buildah
+      resources: {}
+      securityContext:
+        privileged: true
+      volumeMounts:
+        - name: varlibcontainers
+          mountPath: /var/lib/containers
   volumes:
     - emptyDir: {}
       name: envparams

@@ -11,3 +11,9 @@
         - name: envparams
           mountPath: /env-params
       workingDir: /env-params
+
+
+
+
+        ###echo "Copying image docker://$(params.src-image) to docker://$(params.dest-image):latest"
+        ###skopeo copy --src-tls-verify=false --dest-tls-verify=false --src-creds="${USER}:${TOKEN}" --dest-authfile=/workspace/dest/.docker/config.json docker://$(params.src-image) docker://$(params.dest-image):latest

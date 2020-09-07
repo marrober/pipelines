@@ -7,16 +7,14 @@ metadata:
     app.kubernetes.io/instance: petstore-from-git
     pipeline.openshift.io/type: kubernetes
   name: petstorepipeline
-  namespace: sandbox-97-2
+  namespace: pipeline-work
 spec:
-  params:
-  - default: petstore-from-git
-    name: APP_NAME
-    type: string
   resources:
   - name: app-source
     type: git
-  - name: app-image
+  - name: output-image
+    type: image
+  - name: builder-image
     type: image
   tasks:
   - name: build
@@ -25,8 +23,11 @@ spec:
       - name: source
         resource: app-source
       outputs:
-      - name: image
-        resource: app-image
+      - name: output-image
+        resource: output-image
+      - name: builder-image
+        resource: builder-image
     taskRef:
       kind: Task
       name: build
+      

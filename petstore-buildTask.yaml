@@ -23,7 +23,7 @@ spec:
     - name: TLSVERIFY
       description: Verify the TLS on the registry endpoint 
       type: string
-      default: 'true' 
+      default: 'false' 
   resources:
     inputs:
       - name: source
@@ -106,6 +106,43 @@ spec:
         - name: gen-source
           mountPath: /gen-source
       workingDir: /gen-source
+    - name: gen-server-xml-file
+      command:
+        - /bin/sh
+        - '-c'
+      args:
+        - |-
+          echo "<server description=\"Sample Liberty server\">" > server.xml
+          echo "  <featureManager>" >> server.xml
+          echo "    <feature>jaxrs-2.1</feature>" >> server.xml
+          echo "    <feature>cdi-2.0</feature>" >> server.xml
+          echo "    <feature>mpRestClient-1.4</feature>" >> server.xml
+          echo "    <feature>mpConfig-1.4</feature>" >> server.xml
+          echo "    <feature>jsonp-1.1</feature>" >> server.xml
+          echo "  </featureManager>" >> server.xml
+          echo "  <variable name=\"default.http.port\" defaultValue=\"9080\"/>" >> server.xml
+          echo "  <variable name=\"default.https.port\" defaultValue=\"9443\"/>" >> server.xml
+          echo "  <httpEndpoint host=\"*\" httpPort=\"\${default.http.port}\" httpsPort=\"\${default.https.port}\" id=\"defaultHttpEndpoint\"/>" >> server.xml
+          echo "  <webApplication location=\"petstore.war\" contextRoot=\"/pets\"/>" >> server.xml
+          echo "</server>" >> server.xml
+          echo "Generated Env file"
+          echo "------------------------------"
+          cat env-file
+          echo "------------------------------"
+      image: registry.redhat.io/ocp-tools-43-tech-preview/source-to-image-rhel8
+      volumeMounts:
+        - name: envparams
+          mountPath: /env-params
+      workingDir: /env-params
+    - name: view-server-xml
+      command:
+        - cat
+        - server.xml
+      image: registry.redhat.io/ocp-tools-43-tech-preview/source-to-image-rhel8
+      volumeMounts:
+        - name: envparams
+          mountPath: /env-params
+      workingDir: /env-params
     - name: gen-binary-extraction-dockerfile
       command:
         - /bin/sh
@@ -114,7 +151,8 @@ spec:
         - |-
           echo "FROM $(resources.outputs.builder-image.url) as builder-image" > ext-dockerfile.gen
           echo "FROM openliberty/open-liberty as runtime-image" >> ext-dockerfile.gen
-          "COPY --from=builder-image /tmp/src/target/applicationPetstore.war /opt/petstore.war" >> ext-dockerfile.gen 
+          echo "COPY --from=builder-image /tmp/src/target/applicationPetstore.war /config/apps/petstore.war" >> ext-dockerfile.gen
+          echo "COPY server.xml /config/server.xml" >> ext-dockerfile.gen
           echo "------------------------------"
           cat ext-dockerfile.gen
           echo "------------------------------"
@@ -148,6 +186,20 @@ spec:
       command:
         - buildah
         - images
+      image: registry.redhat.io/rhel8/buildah
+      resources: {}
+      securityContext:
+        privileged: true
+      volumeMounts:
+        - name: varlibcontainers
+          mountPath: /var/lib/containers
+    - name: push-image-to-openshift
+      command:
+        - buildah
+        - push
+        - '--tls-verify=$(params.TLSVERIFY)'
+        - $(resources.outputs.output-image.url)
+        - 'docker://$(resources.outputs.output-image.url)'
       image: registry.redhat.io/rhel8/buildah
       resources: {}
       securityContext:
